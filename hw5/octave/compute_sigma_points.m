@@ -11,9 +11,17 @@ n = length(mu);
 sigma_points = zeros(n,2*n+1);
 
 % TODO: compute all sigma points
+P_sqrt = chol(sigma, 'lower');
+sigma_points(:,1) = mu;
+sigma_points(:,2:n+1) = mu + sqrt(n+lambda)*P_sqrt;
+sigma_points(:,n+2:end) = mu - sqrt(n+lambda)*P_sqrt;
 
 
 % TODO compute weight vectors w_m and w_c
-
-
+w_m = zeros(1,2*n+1);
+w_c = zeros(1,2*n+1);
+w_m(1) = lambda/(n+lambda);
+w_c(1) = w_m(1) + (1 - alpha*alpha + beta);
+w_m(2:end) = 1/(2*(n+lambda));
+w_c(2:end) = 1/(2*(n+lambda));
 end
