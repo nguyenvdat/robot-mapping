@@ -10,11 +10,14 @@ H = spalloc(length(g.x), length(g.x), nnz);
 b = zeros(length(g.x), 1);
 
 needToAddPrior = true;
+% needToAddPrior = false;
 
 % compute the addend term to H and b for each of our constraints
 disp('linearize and build system');
 for eid = 1:length(g.edges)
   edge = g.edges(eid);
+  % edge.fromIdx
+  % edge.toIdx
 
   % pose-pose constraint
   if (strcmp(edge.type, 'P') != 0)
@@ -33,14 +36,22 @@ for eid = 1:length(g.edges)
     % B Jacobian wrt x2
     [e, A, B] = linearize_pose_pose_constraint(x1, x2, edge.measurement);
 
-
+    om = edge.information;
     % TODO: compute and add the term to H and b
+    i = edge.fromIdx:edge.fromIdx+2;
+    j = edge.toIdx:edge.toIdx+2;
+    b(i) += A'*om'*e;
+    b(j) += B'*om'*e;
 
+    H(i, i) += A'*om*A;
+    H(i, j) += A'*om*B;
+    H(j, i) += B'*om*A;
+    H(j, j) += B'*om*B;
 
     if (needToAddPrior)
       % TODO: add the prior for one pose of this edge
       % This fixes one node to remain at its current location
-      
+      H(1:3,1:3) += eye(3);
       needToAddPrior = false;
     end
 
@@ -63,7 +74,16 @@ for eid = 1:length(g.edges)
 
 
     % TODO: compute and add the term to H and b
+    om = edge.information;
+    i = edge.fromIdx:edge.fromIdx+2;
+    j = edge.toIdx:edge.toIdx+1;
+    b(i) += A'*om'*e;
+    b(j) += B'*om'*e;
 
+    H(i, i) += A'*om*A;
+    H(i, j) += A'*om*B;
+    H(j, i) += B'*om*A;
+    H(j, j) += B'*om*B;
 
   end
 end
@@ -72,6 +92,6 @@ disp('solving system');
 
 % TODO: solve the linear system, whereas the solution should be stored in dx
 % Remember to use the backslash operator instead of inverting H
-
+dx = -H\b;
 
 end
